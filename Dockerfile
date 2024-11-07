@@ -1,17 +1,12 @@
 FROM  alpine:3.8
-    
-RUN   mkdir  /var/flasksite
 
-COPY  .  /var/flasksite/
+COPY app.py test.py /app/
 
-WORKDIR  /var/flasksite/
+WORKDIR /app
 
-RUN apk add python3 
-
-RUN  pip3 install  -r requirements.txt 
+RUN pip install flask pytest flake8
 
 EXPOSE 5000
 
-ENTRYPOINT [ "python3" ]
+CMD ["python", "app.py"]
 
-CMD [ "app.py" ]
