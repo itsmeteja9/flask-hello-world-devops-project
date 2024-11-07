@@ -1,15 +1,17 @@
-FROM python:3.9-slim-buster
+FROM  alpine:3.8
+    
+RUN   mkdir  /var/flasksite
 
-WORKDIR /app
+COPY  .  /var/flasksite/
 
-COPY requirements.txt requirements.txt
+WORKDIR  /var/flasksite/
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apk add python3 
 
-COPY . .
+RUN  pip3 install  -r requirements.txt 
 
-EXPOSE 80
+EXPOSE 5000
 
-ENV FLASK_APP=app.py
+ENTRYPOINT [ "python3" ]
 
-CMD ["flask", "run", "--host=0.0.0.0"]
+CMD [ "app.py" ]
