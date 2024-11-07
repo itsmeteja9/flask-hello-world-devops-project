@@ -1,42 +1,59 @@
-pipeline {
-    agent any
-    
-    environment {
-        DOCKER_HUB_REPO = "shivammitra/flask-hello-world"
-        CONTAINER_NAME = "flask-hello-world"
-        DOCKERHUB_CREDENTIALS=credentials('dockerhub-credentials')
+pipeline { 
+
+    environment { 
+
+        registry = "itsmeteja9/flask-hello-world-devops-project" 
+
+        registryCredential = 'dockerjenkinsintegration' 
+
+        dockerImage = '' 
+
     }
-    
-    stages {
-        /* We do not need a stage for checkout here since it is done by default when using "Pipeline script from SCM" option. */
-        
-        stage('Build') {
-            steps {
-                echo 'Building..'
-                sh 'docker image build -t $DOCKER_HUB_REPO:latest .'
-            }
+    agent any 
+
+    stages { 
+
+
+        stage('Building our image') { 
+
+            steps { 
+
+                script { 
+
+                    dockerImage = docker.build registry + ":$BUILD_NUMBER" 
+
+                }
+            } 
         }
-        stage('Test') {
-            steps {
-                echo 'Testing..'
-                sh 'docker stop $CONTAINER_NAME || true'
-                sh 'docker rm $CONTAINER_NAME || true'
-                sh 'docker run --name $CONTAINER_NAME $DOCKER_HUB_REPO /bin/bash -c "pytest test.py && flake8"'
+
+        stage('Deploy our image') { 
+
+            steps { 
+
+                script { 
+
+                    docker.withRegistry( '', registryCredential ) { 
+
+                        dockerImage.push() 
+
+                 }
+
+                } 
+
             }
-        }
-        stage('Push') {
-            steps {
-                echo 'Pushing image..'
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                sh 'docker push $DOCKER_HUB_REPO:latest'
+
+        } 
+
+        stage('Cleaning up') { 
+
+            steps { 
+
+                bat "docker rmi $registry:$BUILD_NUMBER" 
+
             }
-        }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying....'
-                sh 'minikube kubectl -- apply -f deployment.yaml'
-                sh 'minikube kubectl -- apply -f service.yaml'
-            }
-        }
+
+        } 
+
     }
+
 }
